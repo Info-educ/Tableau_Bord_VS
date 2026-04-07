@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tableau de Bord Vie Scolaire</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════
+     ÉCRAN UPLOAD
+     ══════════════════════════════════════════════════════════ -->
+<div id="screen-upload">
+  <div class="upload-hero">
+    <div class="upload-logo">📊</div>
+    <div class="upload-title">Vie Scolaire <span>Dashboard</span></div>
+    <div class="upload-subtitle">Déposez vos fichiers par année scolaire — le type est détecté automatiquement</div>
+  </div>
+  <div class="years-row" id="years-row"></div>
+  <input type="file" id="file-picker" multiple accept=".csv,.txt,.xlsx,.xlsm" style="display:none">
+  <div class="upload-actions">
+    <button class="btn-main" id="btn-go" disabled>Analyser les données →</button>
+    <button class="btn-sec"  id="btn-theme-upload">◑ Thème</button>
+    <button class="btn-sec"  id="btn-clear" style="display:none">✕ Tout effacer</button>
+  </div>
+  <div id="load-summary" style="font-size:12px;color:var(--text2);text-align:center;display:none"></div>
+  <div class="upload-note">
+    Glissez-déposez les fichiers d'une année sur sa carte, ou cliquez <strong>＋ Ajouter une année</strong>.<br>
+    Le type (absences, retards, punitions, sanctions, suivi.xlsx) est détecté automatiquement.<br>
+    <strong>Conformité RGPD</strong> — toutes les données restent sur votre ordinateur.
+  </div>
+  <div class="upload-manual-link">
+    <a id="link-readme" href="#" target="_blank" rel="noopener noreferrer">
+      📖 Manuel d'utilisation
+    </a>
+  </div>
+  <div id="parse-errors" style="display:none;max-width:700px;width:100%"></div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     ÉCRAN DASHBOARD  (une seule balise — bug B1 corrigé)
+     ══════════════════════════════════════════════════════════ -->
+<div id="screen-dashboard" style="display:none">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title">📊 <span>Vie Scolaire</span></div>
+    <div class="cg years" id="yf"></div>
+    <div class="cg levels" id="lf">
+      <label><input type="radio" name="niv" value="all" checked> Tous</label>
+      <label><input type="radio" name="niv" value="6ème"> 6ème</label>
+      <label><input type="radio" name="niv" value="5ème"> 5ème</label>
+      <label><input type="radio" name="niv" value="4ème"> 4ème</label>
+      <label><input type="radio" name="niv" value="3ème"> 3ème</label>
+    </div>
+    <select class="classe-select" id="cf" title="Filtrer par classe">
+      <option value="">Toutes les classes</option>
+    </select>
+    <div class="tb-right">
+      <div class="ib" id="btn-theme" title="Basculer thème">◑</div>
+      <div class="ib" title="Retour à l'accueil" onclick="showUpload()">↩</div>
+    </div>
+  </div>
+
+  <!-- PÉRIODE -->
+  <div class="mbar">
+    <span>Période</span>
+    <div class="mpills" id="mpills"></div>
+    <div class="mshort">
+      <div class="ms" data-r="0,9">Année</div>
+      <div class="ms" data-r="0,4">S1</div>
+      <div class="ms" data-r="0,2">T1</div>
+      <div class="ms" data-r="3,5">T2</div>
+      <div class="ms" data-r="6,9">T3</div>
+    </div>
+  </div>
+
+  <!-- ONGLETS -->
+  <div class="navtabs">
+    <div class="navtab active" data-tab="t-synthese">📊 Synthèse</div>
+    <div class="navtab" data-tab="t-absences">🏠 Absences</div>
+    <div class="navtab" data-tab="t-retards">⏱️ Retards</div>
+    <div class="navtab" data-tab="t-punitions">⚠️ Punitions</div>
+    <div class="navtab" data-tab="t-sanctions">⚖️ Sanctions</div>
+    <div class="navtab" data-tab="t-suivi">🚨 Incidents &amp; Suivi</div>
+    <div class="navtab" data-tab="t-classes">🏫 Classes</div>
+    <div class="navtab" data-tab="t-eleves">👤 Élèves</div>
+    <div class="navtab" data-tab="t-motifs">⚙️ Motifs</div>
+  </div>
+
+  <!-- ════════════════════ SYNTHÈSE ════════════════════ -->
+  <div id="t-synthese" class="main tab-content">
+    <div class="section">
+      <div class="section-title">📊 Indicateurs clés</div>
+      <div class="kpi-row" id="kpi-synthese"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">📈 Évolution mensuelle</div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Absences (demi-journées)</div></div><div class="chart-wrap"><canvas id="c-s-abs"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Punitions &amp; Sanctions</div></div><div class="chart-wrap"><canvas id="c-s-psa"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Retards</div></div><div class="chart-wrap"><canvas id="c-s-ret"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Incidents &amp; Suivi (Inc.+CD+CE)</div></div><div class="chart-wrap"><canvas id="c-s-inc"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ ABSENCES ════════════════════ -->
+  <div id="t-absences" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">🏠 Absences</div>
+      <div class="kpi-row" id="kpi-absences"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">🔴 Décrochage — élèves &gt; <span id="seuil-label">4</span> dj NJ / mois (strict)</div>
+      <div id="decrochage-banner" class="decrochage-banner">
+        <div>
+          <div class="decrochage-count" id="dec-total">—</div>
+          <div class="decrochage-label">élèves uniques concernés<br><strong id="dec-annee-label">—</strong></div>
+        </div>
+        <div class="decrochage-mois" id="dec-pills"></div>
+      </div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Élèves en décrochage / mois</div></div><div class="chart-wrap"><canvas id="c-dec-mois"></canvas></div></div>
+        <div class="panel anim">
+          <div class="panel-head"><div class="panel-title" id="dec-liste-titre">Élèves concernés — cliquez sur un mois</div></div>
+          <div class="table-wrap" style="max-height:260px;overflow-y:auto">
+            <table class="dt"><thead><tr><th style="text-align:left">Élève</th><th>Classe</th><th>Niv.</th><th>dj NJ</th></tr></thead>
+            <tbody id="dec-liste"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">📉 Détail absences</div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Total (dj) par mois</div></div><div class="chart-wrap"><canvas id="c-abs-total"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title" id="abs-jnj-titre">Justifiées vs Non Justifiées</div></div><div class="chart-wrap"><canvas id="c-abs-jnj"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Répartition par niveau</div></div><div class="chart-wrap"><canvas id="c-abs-niv"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Absences NJ par niveau</div></div><div class="chart-wrap"><canvas id="c-abs-nj-niv"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ RETARDS ════════════════════ -->
+  <div id="t-retards" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">⏱️ Retards</div>
+      <div class="kpi-row" id="kpi-retards"></div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Retards par mois</div></div><div class="chart-wrap"><canvas id="c-ret-total"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Par niveau</div></div><div class="chart-wrap"><canvas id="c-ret-niv"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ PUNITIONS ════════════════════ -->
+  <div id="t-punitions" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">⚠️ Punitions</div>
+      <div class="kpi-row" id="kpi-punitions"></div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Total punitions par mois</div></div><div class="chart-wrap"><canvas id="c-pun-total"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Par niveau</div></div><div class="chart-wrap"><canvas id="c-pun-niv"></canvas></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🚪 Types de punitions</div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Exclusions de cours par mois</div></div><div class="chart-wrap"><canvas id="c-pun-excl"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Retenues par mois</div></div><div class="chart-wrap"><canvas id="c-pun-ret"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Devoirs supplémentaires par mois</div></div><div class="chart-wrap"><canvas id="c-pun-dev"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Exclusions de cours par niveau</div></div><div class="chart-wrap"><canvas id="c-pun-type-niv"></canvas></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">🔍 Motifs des punitions</div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Par catégorie (comparatif années)</div></div><div class="chart-wrap tall"><canvas id="c-pun-cat"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Répartition</div></div><div class="chart-wrap"><canvas id="c-pun-donut"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ SANCTIONS ════════════════════ -->
+  <div id="t-sanctions" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">⚖️ Sanctions</div>
+      <div class="kpi-row" id="kpi-sanctions"></div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Sanctions par mois</div></div><div class="chart-wrap"><canvas id="c-san-total"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Par niveau</div></div><div class="chart-wrap"><canvas id="c-san-niv"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Motifs — par catégorie</div></div><div class="chart-wrap tall"><canvas id="c-san-cat"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Répartition</div></div><div class="chart-wrap"><canvas id="c-san-donut"></canvas></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ INCIDENTS & SUIVI ════════════════════ -->
+  <div id="t-suivi" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">🚨 Incidents &amp; Signalements — vue globale</div>
+      <div class="suivi-grid" id="suivi-kpis"></div>
+    </div>
+    <div class="section">
+      <div class="section-title">📈 Évolution mensuelle</div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Incidents par mois</div></div><div class="chart-wrap"><canvas id="c-inc-mois"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">CD / CE / Faits par mois</div></div><div class="chart-wrap"><canvas id="c-suivi-mois"></canvas></div></div>
+      </div>
+      <div class="chart-grid">
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Incidents par niveau</div></div><div class="chart-wrap"><canvas id="c-inc-niv"></canvas></div></div>
+        <div class="panel anim"><div class="panel-head"><div class="panel-title">Signalements absentéisme / IP par mois</div></div><div class="chart-wrap"><canvas id="c-signal-mois"></canvas></div></div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">📋 Tableau chronologique</div>
+      <div class="panel anim">
+        <div class="panel-head">
+          <div class="panel-title">Tous les événements — <span id="suivi-annee-label"></span></div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="suivi-annee-sel" class="classe-select"></select>
+            <select id="suivi-type-sel" class="classe-select">
+              <option value="">Tous les types</option>
+              <option value="incidents">Incidents</option>
+              <option value="cd">Conseils de discipline</option>
+              <option value="ce">Commissions éducatives</option>
+              <option value="faits">Faits établissement</option>
+              <option value="signalements">Signalements abs.</option>
+              <option value="ip">Informations préoccupantes</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="dt">
+            <thead><tr><th>Mois</th><th>Type</th><th style="text-align:left">Élève</th><th style="text-align:left">Motif</th><th>Classe</th><th>Niv.</th></tr></thead>
+            <tbody id="tbody-suivi"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ CLASSES ════════════════════ -->
+  <div id="t-classes" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">🏫 Classement des classes</div>
+      <div class="panel anim">
+        <div class="panel-head">
+          <div class="panel-title">Résumé par classe</div>
+          <select id="classes-annee-sel" class="classe-select"></select>
+        </div>
+        <div class="table-wrap">
+          <table class="dt">
+            <thead><tr></tr></thead>
+            <tbody id="tbody-classes"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ ÉLÈVES ════════════════════ -->
+  <div id="t-eleves" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">👤 Suivi individuel des élèves</div>
+      <div id="eleves-content">
+        <div style="background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);border-radius:8px;padding:10px 14px;font-size:11px;color:var(--text2);margin-bottom:4px">
+          ℹ️ <strong>Données nominatives.</strong> Conformité RGPD : données traitées localement dans votre navigateur, aucune transmission réseau.
+        </div>
+        <div class="panel anim">
+          <div class="panel-head">
+            <div class="panel-title">Élèves les plus impliqués (top 50)</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <select id="eleves-annee-sel" class="classe-select"></select>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="dt">
+              <thead><tr></tr></thead>
+              <tbody id="tbody-eleves"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════ MOTIFS ════════════════════ -->
+  <div id="t-motifs" class="main tab-content" style="display:none">
+    <div class="section">
+      <div class="section-title">⚙️ Mapping des motifs Pronote → 10 catégories</div>
+
+      <!-- ── Bloc export / intégration ── -->
+      <div class="panel anim mapping-export-panel">
+        <div class="panel-head">
+          <div class="panel-title">💾 Sauvegarder & intégrer le mapping</div>
+        </div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.7">
+          Mappez vos motifs ci-dessous, puis utilisez ces boutons pour <strong>exporter</strong> votre mapping ou
+          <strong>générer le code</strong> à coller dans <code style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:3px">mapping_data.js</code>
+          afin qu'il devienne le nouveau défaut permanent de l'application.
+        </p>
+        <div class="mapping-export-actions">
+          <button class="btn-mapping-action" id="btn-mapping-export-json" title="Télécharger le mapping courant en fichier .json">
+            ⬇️ Exporter JSON
+          </button>
+          <button class="btn-mapping-action" id="btn-mapping-import-json" title="Charger un fichier .json exporté précédemment">
+            ⬆️ Importer JSON
+          </button>
+          <button class="btn-mapping-action accent" id="btn-mapping-copy-code" title="Copier le bloc JS prêt à coller dans mapping_data.js">
+            📋 Copier pour mapping_data.js
+          </button>
+          <button class="btn-mapping-action danger" id="btn-mapping-reset" title="Remettre le mapping par défaut du code source">
+            ↩ Réinitialiser
+          </button>
+        </div>
+        <input type="file" id="mapping-file-input" accept=".json" style="display:none">
+
+        <!-- Zone de prévisualisation du code généré -->
+        <div id="mapping-code-preview" style="display:none;margin-top:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;font-weight:600;color:var(--text2)">Code à coller dans <code style="font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--bg3);padding:1px 5px;border-radius:3px">js/mapping_data.js</code> (remplacer tout le fichier)</span>
+            <button class="btn-sec" id="btn-mapping-copy-close" style="font-size:10px;padding:3px 10px">✕ Fermer</button>
+          </div>
+          <textarea id="mapping-code-textarea" readonly
+            style="width:100%;height:320px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;
+                   background:var(--bg);color:var(--text2);border:1px solid var(--border);border-radius:8px;
+                   padding:12px;resize:vertical;outline:none"></textarea>
+          <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+            <button class="btn-sec" id="btn-mapping-copy-clipboard" style="font-size:11px;padding:6px 16px">📋 Copier dans le presse-papier</button>
+            <button class="btn-sec" id="btn-mapping-download-js" style="font-size:11px;padding:6px 16px">⬇️ Télécharger mapping_data.js</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Table de correspondance ── -->
+      <div class="panel anim">
+        <div class="panel-head">
+          <div class="panel-title">Table de correspondance</div>
+        </div>
+        <p style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+          Les motifs en <span style="color:var(--red)">rouge</span> sont présents dans vos données mais pas encore mappés.<br>
+          Les modifications sont sauvegardées automatiquement dans votre navigateur (localStorage).
+        </p>
+        <div id="mapping-unknown-section" style="display:none;margin-bottom:20px">
+          <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:8px">⚠️ Motifs non mappés :</div>
+          <div class="mapping-grid" id="mapping-unknown-list"></div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--text2);margin-bottom:8px">Tous les motifs mappés :</div>
+        <div class="mapping-grid" id="mapping-all-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div><!-- fin #screen-dashboard -->
+
+<!-- ══════════════════════════════════════════════════════════
+     LIBRAIRIES CDN (chargées avant nos scripts)
+     ══════════════════════════════════════════════════════════ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- ══════════════════════════════════════════════════════════
+     MODULES APPLICATIFS (ordre de dépendance strict)
+     Bug B2/B5 corrigé : plus de code inline, uniquement src=
+     ══════════════════════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/mapping_data.js"></script>
+<script src="js/mapping.js"></script>
+<script src="js/parser.js"></script>
+<script src="js/store.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
