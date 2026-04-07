@@ -49,11 +49,8 @@ document.getElementById('btn-theme')        && (document.getElementById('btn-the
 (function initReadmeLink() {
   const a = document.getElementById('link-readme');
   if (!a) return;
-  if (CFG.readmeUrl && !CFG.readmeUrl.includes('VOTRE-COMPTE')) {
+  if (CFG.readmeUrl) {
     a.href = CFG.readmeUrl;
-  } else {
-    // URL non configurée : masquer le lien discrètement
-    a.closest('.upload-manual-link').style.display = 'none';
   }
 })();
 
