@@ -11,7 +11,7 @@ const CFG = {
   // ── Lien vers le manuel (README du dépôt GitHub)
   //    Remplacer par l'URL réelle de votre dépôt, ex :
   //    'https://github.com/votre-compte/votre-depot/blob/main/README.md'
-  readmeUrl: 'https://github.com/info-educ/Tableau_Bord_VS/blob/main/README.md',
+  readmeUrl: 'README.md',
 
   // ── Niveaux (ordre d'affichage)
   niveaux: ['6ème', '5ème', '4ème', '3ème'],
