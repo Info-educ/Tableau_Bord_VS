@@ -770,7 +770,7 @@ function renderAbsences(annees, dern) {
   Charts.barAbsJNJ('c-abs-jnj', absJ, absNJ, mR, dern);
   Charts.barParNiveau('c-abs-niv',    Store.absParNiveau(dern));
   Charts.barParNiveau('c-abs-nj-niv', Store.absParNiveau(dern, false));
-  Charts.doughnutParCategorie('c-abs-donut', Store.countParCategorie('absences', dern));
+  Charts.doughnutMotifs('c-abs-donut', Store.absMotifs(dern));
 }
 
 function showDecListe(moisIdx) {

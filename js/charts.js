@@ -172,6 +172,35 @@ const Charts = (() => {
   }
 
   // ─────────────────────────────────────────
+  //  DONUT MOTIFS D'ABSENCE (libellés bruts)
+  // ─────────────────────────────────────────
+  function doughnutMotifs(id, motifsCounts) {
+    const entries = Object.entries(motifsCounts || {})
+      .filter(([, v]) => v > 0)
+      .sort((a, b) => b[1] - a[1]);
+    if (!entries.length) { _empty(id); return; }
+    const labels = entries.map(([k]) => k);
+    const values = entries.map(([, v]) => v);
+    const palette = [
+      '#06b6d4','#a855f7','#ec4899','#3b82f6','#f59e0b',
+      '#10b981','#ef4444','#8b5cf6','#f97316','#6366f1',
+      '#14b8a6','#84cc16','#e879f9','#fb923c','#38bdf8'
+    ];
+    const colors = labels.map((_, i) => palette[i % palette.length]);
+    const dark = isDark();
+    _upsert(id, 'doughnut', {
+      labels,
+      datasets: [{ data: values, backgroundColor: colors, borderWidth: 0, hoverOffset: 8 }]
+    }, {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'right', labels: { color: dark ? '#8b97ad' : '#4a5568', font: { family: 'Outfit', size: 10 }, boxWidth: 10, padding: 7 } },
+        tooltip: baseOpts().plugins.tooltip
+      }
+    });
+  }
+
+  // ─────────────────────────────────────────
   //  ABSENCES J vs NJ (barres empilées)
   // ─────────────────────────────────────────
   function barAbsJNJ(id, absJ, absNJ, range, annee) {
@@ -197,7 +226,7 @@ const Charts = (() => {
   return {
     isDark,
     lineParMois, barParMois, barMulti,
-    barParNiveau, barParCategorie, doughnutParCategorie, barAbsJNJ,
+    barParNiveau, barParCategorie, doughnutParCategorie, doughnutMotifs, barAbsJNJ,
     destroyAll, empty
   };
 })();

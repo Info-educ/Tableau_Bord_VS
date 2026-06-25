@@ -298,12 +298,26 @@ const Store = (() => {
   function getRaw(type) { return [...(_raw[type] || [])]; }
   function hasData(type) { return (_raw[type] || []).length > 0; }
 
+  // ─────────────────────────────────
+  //  MOTIFS D'ABSENCE (libellés bruts Pronote)
+  // ─────────────────────────────────
+  function absMotifs(annee) {
+    const res = {};
+    for (const r of _raw.absences) {
+      if (annee && r.annee !== annee) continue;
+      if (!_okM(r)) continue;
+      const motif = (r.motif && r.motif.trim()) ? r.motif.trim() : 'Non renseigné';
+      res[motif] = (res[motif] || 0) + 1;
+    }
+    return res;
+  }
+
   return {
     addRecords, reset, getAnnees, getAllClasses, getFiltres, getCounts, getRaw, hasData,
     setFiltreAnnees, setFiltreNiveaux, setFiltreClasses, setFiltreMois,
     countParMoisParAnnee, absParMoisParAnnee, punitionsParTypeMois, suiviParMoisParAnnee,
     countParNiveau, absParNiveau, punitionsParTypeNiveau,
-    countParCategorie,
+    countParCategorie, absMotifs,
     resumeParClasse, resumeParEleve,
     decrochageParMois, decrochageElevesParMois,
     kpis
