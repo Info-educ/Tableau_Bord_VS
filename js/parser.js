@@ -367,20 +367,21 @@ const Parser = (() => {
         });
       }
 
-      for (const auteurStr of auteursList) {
-        const a = parseAuteur(auteurStr);
-        acc.push({
-          annee,
-          nom:    a ? a.nom    : '',
-          prenom: a ? a.prenom : '',
-          classe: a ? a.classe : '?',
-          niveau: a ? a.niveau : 'Inconnu',
-          motifs: parseMotifs(motifRaw),
-          moisIdx: date.moisIdx,
-          type: 'incident',
-          _auteursWarning: _auteursDetectionFallback
-        });
-      }
+      // 1 ligne Excel = 1 incident, même si plusieurs auteurs.
+      // On retient le premier auteur pour les vues par élève/classe.
+      const a = parseAuteur(auteursList[0] || '');
+      acc.push({
+        annee,
+        nom:    a ? a.nom    : '',
+        prenom: a ? a.prenom : '',
+        classe: a ? a.classe : '?',
+        niveau: a ? a.niveau : 'Inconnu',
+        motifs: parseMotifs(motifRaw),
+        auteurs: auteursList.map(s => parseAuteur(s)).filter(Boolean),
+        moisIdx: date.moisIdx,
+        type: 'incident',
+        _auteursWarning: _auteursDetectionFallback
+      });
       return acc;
     }, []);
   }
