@@ -446,10 +446,12 @@ const Parser = (() => {
       }
     });
 
-    for (const row of allRows.slice(1)) {
-      if (!row || row.every(c => !String(c || '').trim())) continue;
+    // On ne lit QUE la dernière ligne non vide (ligne de totaux des signalements)
+    const dataRows = allRows.slice(1).filter(r => r && !r.every(c => !String(c || '').trim()));
+    const lastRow  = dataRows[dataRows.length - 1];
+    if (lastRow) {
       for (const [colStr, mi] of Object.entries(colToMois)) {
-        const val = parseFloat(String(row[parseInt(colStr)] || '').replace(',', '.'));
+        const val = parseFloat(String(lastRow[parseInt(colStr)] || '').replace(',', '.'));
         if (!isNaN(val) && mi <= 9) totaux[mi] += val;
       }
     }
